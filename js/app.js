@@ -1,5 +1,9 @@
-// Minimal JS pour gérer l'ajout d'entraînements et le stockage local
+// JS minimal pour gérer l'ajout d'entraînements, la structure des séances
+// et le stockage local (localStorage).
+// Format stocké pour une séance:
+// { date: 'YYYY-MM-DD', notes: '...', exercises: [ { name: 'Exo', sets: [ { reps: '8', weight: '80' }, ... ] }, ... ] }
 (function(){
+  // Références DOM principales
   const form = document.getElementById('workoutForm');
   const list = document.getElementById('workoutList');
   const summary = document.getElementById('summary');
@@ -7,20 +11,24 @@
   const addExerciseBtn = document.getElementById('addExerciseBtn');
   const clearExercisesBtn = document.getElementById('clearExercisesBtn');
 
+  // Charge le tableau de séances depuis localStorage (ou [] si absent)
   function loadWorkouts(){
     try{ return JSON.parse(localStorage.getItem('workouts')||'[]'); }
     catch(e){ return []; }
   }
 
+  // Sauvegarde le tableau de séances en JSON dans localStorage
   function saveWorkouts(arr){
     localStorage.setItem('workouts', JSON.stringify(arr));
   }
 
+  // Protège les valeurs affichées contre l'injection HTML
   function escapeHtml(s){
     if(s === null || s === undefined) return '';
     return String(s).replace(/[&<>"'`]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;', '`':'&#96;'}[c];});
   }
 
+  // Rend la liste d'historique dans le DOM à partir des données stockées
   function render(){
     const items = loadWorkouts();
     list.innerHTML = '';
@@ -29,15 +37,16 @@
       return;
     }
     summary.textContent = `${items.length} séance(s) enregistrée(s)`;
+    // on affiche les séances les plus récentes en premier
     items.slice().reverse().forEach((w, i)=>{
       const li = document.createElement('li');
       li.className = 'list-group-item';
-      // build exercises html
+      // construire le HTML des exercices et séries pour cette séance
       let exercisesHtml = '';
       (w.exercises||[]).forEach((ex, exIdx)=>{
         exercisesHtml += `<div class="mb-2"><div class="fw-bold">${escapeHtml(ex.name)}</div><ul class="mb-0 small">`;
         (ex.sets||[]).forEach((s, sIdx)=>{
-          exercisesHtml += `<li>Set ${sIdx+1}: ${escapeHtml(s.reps)} ${s.weight?('@ '+escapeHtml(s.weight)+' kg') : ''}</li>`;
+          exercisesHtml += `<li>Série ${sIdx+1}: ${escapeHtml(s.reps)} ${s.weight?('· '+escapeHtml(s.weight)+' kg') : ''}</li>`;
         });
         exercisesHtml += `</ul></div>`;
       });
@@ -55,6 +64,7 @@
     });
   }
 
+  // Supprime une séance par index (après confirmation)
   function removeAt(idx){
     const items = loadWorkouts();
     if(idx<0||idx>=items.length) return;
@@ -64,20 +74,57 @@
     render();
   }
 
-  // --- Dynamic form builders ---
+  // Crée une ligne de série (inputs pour répétitions et poids)
   function createSetRow(setData){
     const row = document.createElement('div');
     row.className = 'd-flex gap-2 align-items-center mb-2 set-row';
-    row.innerHTML = `
-      <input type="text" class="form-control form-control-sm set-reps" placeholder="Rép (ex: 8)" value="${escapeHtml((setData&&setData.reps)||'')}" />
-      <input type="number" class="form-control form-control-sm set-weight" placeholder="Poids (kg)" value="${escapeHtml((setData&&setData.weight)||'')}" />
-      <button type="button" class="btn btn-sm btn-outline-light btn-remove-set">✖</button>
-    `;
-    const removeBtn = row.querySelector('.btn-remove-set');
+
+    const repsInput = document.createElement('input');
+    repsInput.type = 'number';
+    repsInput.inputMode = 'numeric';
+    repsInput.pattern = '\\d*';
+    repsInput.min = '0';
+    repsInput.step = '1';
+    repsInput.className = 'form-control form-control-sm set-reps';
+    repsInput.placeholder = 'Rép (ex: 8)';
+    repsInput.value = escapeHtml((setData&&setData.reps)||'');
+
+    const weightInput = document.createElement('input');
+    weightInput.type = 'number';
+    weightInput.inputMode = 'decimal';
+    weightInput.min = '0';
+    weightInput.step = '0.1';
+    weightInput.className = 'form-control form-control-sm set-weight';
+    weightInput.placeholder = 'Poids (kg)';
+    weightInput.value = escapeHtml((setData&&setData.weight)||'');
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'btn btn-sm btn-outline-light btn-remove-set';
+    removeBtn.textContent = '✖';
     removeBtn.addEventListener('click', ()=>{ row.remove(); });
+
+    // Nettoyage des saisies :
+    // - répétitions : conserver uniquement les chiffres (entiers)
+    repsInput.addEventListener('input', ()=>{
+      repsInput.value = repsInput.value.replace(/\D+/g, '');
+    });
+    // - poids : autoriser chiffres et un seul point décimal
+    weightInput.addEventListener('input', ()=>{
+      weightInput.value = weightInput.value.replace(/[^0-9.]+/g, '');
+      const parts = weightInput.value.split('.');
+      if(parts.length>2){
+        weightInput.value = parts[0] + '.' + parts.slice(1).join('');
+      }
+    });
+
+    row.appendChild(repsInput);
+    row.appendChild(weightInput);
+    row.appendChild(removeBtn);
     return row;
   }
 
+  // Crée une carte DOM pour un exercice, contenant le nom et ses séries
   function createExerciseCard(exData){
     const card = document.createElement('div');
     card.className = 'card mb-3 exercise-card';
@@ -109,7 +156,7 @@
     cardBody.appendChild(addSetBtn);
     card.appendChild(cardBody);
 
-    // remove exercise handler
+    // Gestionnaire suppression d'un exercice (avec confirmation)
     card.querySelector('.btn-remove-exercise').addEventListener('click', ()=>{ if(confirm('Supprimer cet exercice ?')) card.remove(); });
 
     // initialize sets
@@ -123,10 +170,32 @@
     exercisesContainer.appendChild(createExerciseCard(exData));
   }
 
+  // Boutons pour ajouter ou réinitialiser les exercices dans le formulaire
   addExerciseBtn.addEventListener('click', ()=> addExercise());
   clearExercisesBtn.addEventListener('click', ()=>{ if(confirm('Réinitialiser tous les exercices ?')){ exercisesContainer.innerHTML=''; addExercise(); } });
 
-  // form submit: collect structured data
+  // Bouton d'export JSON : télécharge toutes les séances et exercices au format JSON
+  const exportBtn = document.getElementById('exportJsonBtn');
+  function exportWorkoutsToJson(){
+    const items = loadWorkouts();
+    if(!items || items.length===0){ alert('Aucune séance à exporter.'); return; }
+    const json = JSON.stringify(items, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const filename = `seances_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.json`;
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+  if(exportBtn) exportBtn.addEventListener('click', exportWorkoutsToJson);
+
+  // Soumission du formulaire : collecte des données structurées
   form.addEventListener('submit', function(e){
     e.preventDefault();
     const date = document.getElementById('date').value;
@@ -155,14 +224,14 @@
     items.push({ date, notes, exercises });
     saveWorkouts(items);
 
-    // reset form: clear date/notes and rebuild exercises container with one empty exercise
+    // Réinitialiser le formulaire : vider la liste d'exercices et ajouter un exercice vide par défaut
     form.reset();
     exercisesContainer.innerHTML = '';
     addExercise();
     render();
   });
 
-  // initial state
+  // État initial : une carte exercice vide et affichage de l'historique
   addExercise();
   render();
 

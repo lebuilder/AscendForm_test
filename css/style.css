@@ -20,7 +20,10 @@ body{
 
 .navbar-brand{ letter-spacing:0.4px; }
 
-/* Navbar logo sizing */
+/* Taille du logo dans la navbar (responsive)
+   - version desktop: 56x56
+   - version mobile: 40x40
+*/
 .navbar-brand .navbar-logo{
   width: 56px;
   height: 56px;
@@ -70,13 +73,17 @@ textarea:focus{
 
 .list-group-item{ background: transparent; color: #ffffff; border-color: rgba(255,255,255,0.03); }
 
-/* Résumé rapide */
+/* Résumé rapide et texte des cartes: couleur en blanc pour lisibilité */
 #summary,
 .card .card-text{
   color: #ffffff;
 }
 
-/* Détails secondaires dans l'historique (plus discret mais lisible) */
+/* Texte secondaire (dates, petites notes) légèrement atténué mais lisible */
 .list-group-item .small.text-muted{
   color: rgba(255,255,255,0.75) !important;
 }
+
+/* Styles pour les éléments dynamiques d'exercices */
+.exercise-card{ background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.03); }
+.set-row input{ max-width: 140px; }

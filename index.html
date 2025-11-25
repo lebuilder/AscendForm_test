@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Suivi Musculation — AscendForm</title>
-    <!-- Favicon: .ico (preferred) + PNG fallback -->
+    <!-- Icônes du site : .ico préféré + fallback PNG -->
     <link rel="icon" type="image/x-icon" href="media/logo_AscendForm.ico">
     <link rel="icon" type="image/png" href="media/logo_AscendForm.png">
     <link rel="shortcut icon" href="media/logo_AscendForm.ico">
@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="css/style.css" />
     </head>
     <body>
+        <!-- Barre de navigation principale -->
         <nav class="navbar navbar-expand-lg navbar-dark bg-transparent py-3">
             <div class="container">
                 <a class="navbar-brand fw-bold d-flex align-items-center" href="#">
@@ -31,6 +32,7 @@
             </div>
         </nav>
 
+        <!-- En-tête / section hero -->
         <header class="py-5 text-center text-white">
             <div class="container">
                 <h1 class="display-5 fw-bold">Ton suivi, simplement</h1>
@@ -41,6 +43,7 @@
 
         <main class="container my-5">
             <div class="row g-4">
+                <!-- Formulaire de saisie des séances (gère plusieurs exercices et séries) -->
                 <section id="tracker" class="col-12 col-lg-6">
                     <div class="card shadow-sm">
                         <div class="card-body">
@@ -51,7 +54,7 @@
                                     <input type="date" id="date" class="form-control" required />
                                 </div>
 
-                                <!-- Container dynamique pour plusieurs exercices -->
+                                <!-- Conteneur dynamique : chaque exercice ajouté crée une 'card' avec ses séries -->
                                 <div id="exercisesContainer"></div>
                                 <div class="mb-3 d-flex gap-2">
                                     <button id="addExerciseBtn" type="button" class="btn btn-sm btn-outline-light">Ajouter un exercice</button>
@@ -70,7 +73,9 @@
                     </div>
                 </section>
 
+                <!-- Colonne de droite : résumé et historique des séances -->
                 <section id="progress" class="col-12 col-lg-6">
+                    <!-- Résumé rapide (nombre de séances) -->
                     <div class="card shadow-sm mb-3">
                         <div class="card-body">
                             <h5 class="card-title">Résumé rapide</h5>
@@ -78,10 +83,16 @@
                         </div>
                     </div>
 
+                    <!-- Historique des séances -->
                     <div class="card shadow-sm">
                         <div class="card-body">
-                            <h5 class="card-title">Historique</h5>
-                            <ul id="workoutList" class="list-group list-group-flush"></ul>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5 class="card-title mb-0">Historique</h5>
+                                <div>
+                                    <button id="exportJsonBtn" type="button" class="btn btn-sm btn-outline-light">Exporter JSON</button>
+                                </div>
+                            </div>
+                                    <ul id="workoutList" class="list-group list-group-flush"></ul>
                         </div>
                     </div>
                 </section>
@@ -90,7 +101,7 @@
 
         <footer class="site-footer">
         <div class="container d-flex justify-content-between align-items-center">
-            <p class="mb-0">&copy; <?=date('Y')?> AcendForm</p>
+            <p class="mb-0">&copy; <?=date('Y')?> AscendForm</p>
             <p class="mb-0 small ">Dev par le_builder1</p>
         </div>
         </footer>
