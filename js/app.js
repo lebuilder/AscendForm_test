@@ -157,7 +157,15 @@
     card.appendChild(cardBody);
 
     // Gestionnaire suppression d'un exercice (avec confirmation)
-    card.querySelector('.btn-remove-exercise').addEventListener('click', ()=>{ if(confirm('Supprimer cet exercice ?')) card.remove(); });
+    card.querySelector('.btn-remove-exercise').addEventListener('click', ()=>{ 
+      // Empêcher la suppression s'il ne reste qu'un seul exercice
+      const exerciseCount = exercisesContainer.querySelectorAll('.exercise-card').length;
+      if(exerciseCount <= 1){
+        showError('Il doit y avoir au moins un exercice dans le formulaire.', card.querySelector('.card-body'));
+        return;
+      }
+      if(confirm('Supprimer cet exercice ?')) card.remove(); 
+    });
 
     // initialize sets
     const initialSets = (exData && exData.sets && exData.sets.length) ? exData.sets : [{}];
@@ -172,7 +180,39 @@
 
   // Boutons pour ajouter ou réinitialiser les exercices dans le formulaire
   addExerciseBtn.addEventListener('click', ()=> addExercise());
-  clearExercisesBtn.addEventListener('click', ()=>{ if(confirm('Réinitialiser tous les exercices ?')){ exercisesContainer.innerHTML=''; addExercise(); } });
+  clearExercisesBtn.addEventListener('click', ()=>{ 
+    // Vérifier si une confirmation existe déjà
+    if(document.querySelector('.confirm-reset')) return;
+    
+    // Créer la boîte de confirmation
+    const confirmBox = document.createElement('div');
+    confirmBox.className = 'confirm-reset';
+    confirmBox.innerHTML = `
+      <div class="confirm-message">🔄 Réinitialiser tous les exercices ?</div>
+      <div class="confirm-buttons">
+        <button class="btn-confirm-yes">Oui</button>
+        <button class="btn-confirm-no">Non</button>
+      </div>
+    `;
+    
+    const container = document.getElementById('exerciseButtonsContainer');
+    container.appendChild(confirmBox);
+    setTimeout(()=>{ confirmBox.classList.add('show'); }, 10);
+    
+    // Bouton Oui
+    confirmBox.querySelector('.btn-confirm-yes').addEventListener('click', ()=>{
+      exercisesContainer.innerHTML=''; 
+      addExercise();
+      confirmBox.classList.remove('show');
+      setTimeout(()=>confirmBox.remove(), 300);
+    });
+    
+    // Bouton Non
+    confirmBox.querySelector('.btn-confirm-no').addEventListener('click', ()=>{
+      confirmBox.classList.remove('show');
+      setTimeout(()=>confirmBox.remove(), 300);
+    });
+  });
 
   // Bouton d'export JSON : télécharge toutes les séances et exercices au format JSON
   const exportBtn = document.getElementById('exportJsonBtn');
@@ -195,12 +235,32 @@
   }
   if(exportBtn) exportBtn.addEventListener('click', exportWorkoutsToJson);
 
+  // Fonction pour afficher un message d'erreur temporaire
+  function showError(message, targetElement) {
+    // Supprimer les anciens messages d'erreur
+    const oldError = targetElement.querySelector('.error-message');
+    if(oldError) oldError.remove();
+    
+    const errorMsg = document.createElement('div');
+    errorMsg.className = 'error-message';
+    errorMsg.textContent = '⚠️ ' + message;
+    targetElement.appendChild(errorMsg);
+    setTimeout(()=>{ errorMsg.classList.add('show'); }, 10);
+    setTimeout(()=>{ 
+      errorMsg.classList.remove('show');
+      setTimeout(()=>errorMsg.remove(), 300);
+    }, 3000);
+  }
+
   // Soumission du formulaire : collecte des données structurées
   form.addEventListener('submit', function(e){
     e.preventDefault();
     const date = document.getElementById('date').value;
     const notes = document.getElementById('notes').value.trim();
-    if(!date){ alert('Remplis la date.'); return; }
+    if(!date){ 
+      showError('Veuillez renseigner la date.', document.getElementById('dateContainer'));
+      return; 
+    }
 
     const exerciseCards = Array.from(document.querySelectorAll('.exercise-card'));
     const exercises = [];
@@ -218,7 +278,10 @@
       if(sets.length>0) exercises.push({ name, sets });
     });
 
-    if(exercises.length===0){ alert('Ajoute au moins un exercice avec au moins une série.'); return; }
+    if(exercises.length===0){ 
+      showError('Ajoute au moins un exercice avec au moins une série.', document.getElementById('exerciseButtonsContainer'));
+      return; 
+    }
 
     const items = loadWorkouts();
     items.push({ date, notes, exercises });

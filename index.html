@@ -32,7 +32,7 @@
             </div>
         </nav>
 
-        <!-- En-tête / section hero -->
+        <!-- En-tête  -->
         <header class="py-5 text-center text-white">
             <div class="container">
                 <h1 class="display-5 fw-bold">Ton suivi, simplement</h1>
@@ -49,16 +49,18 @@
                         <div class="card-body">
                             <h5 class="card-title">Ajouter une séance</h5>
                             <form id="workoutForm">
-                                <div class="mb-2">
+                                <div class="mb-2" id="dateContainer">
                                     <label class="form-label">Date</label>
-                                    <input type="date" id="date" class="form-control" required />
+                                    <input type="date" id="date" class="form-control" />
                                 </div>
 
                                 <!-- Conteneur dynamique : chaque exercice ajouté crée une 'card' avec ses séries -->
                                 <div id="exercisesContainer"></div>
-                                <div class="mb-3 d-flex gap-2">
-                                    <button id="addExerciseBtn" type="button" class="btn btn-sm btn-outline-light">Ajouter un exercice</button>
-                                    <button id="clearExercisesBtn" type="button" class="btn btn-sm btn-outline-light">Réinitialiser</button>
+                                <div id="exerciseButtonsContainer" class="mb-3">
+                                    <div class="d-flex gap-2">
+                                        <button id="addExerciseBtn" type="button" class="btn btn-sm btn-outline-light">Ajouter un exercice</button>
+                                        <button id="clearExercisesBtn" type="button" class="btn btn-sm btn-outline-light">Réinitialiser</button>
+                                    </div>
                                 </div>
 
                                 <div class="mb-3">
